@@ -79,10 +79,56 @@ button:disabled {
   margin-right: 10px;
 }
 
-.result button:last-child {
-  background-color: #6c757d;
+.normalized-text {
+  background-color: #e7f3ff;
+  padding: 10px;
+  border-radius: 4px;
+  border-left: 3px solid #0056b3;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
 }
 
-.result button:last-child:hover {
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-primary,
+.btn-secondary {
+  flex: 1;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #218838;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
   background-color: #5a6268;
+}
+
+.error {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 10px;
+  border-left: 3px solid #d32f2f;
+  border-radius: 4px;
+  margin-top: 10px;
 }

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
+import { analyzeImage, reportPattern } from './api/client';
 import './App.css';
 
 function App() {
   const [file, setFile] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
+    setError(null);
   };
 
   const handleUpload = async (e) => {
@@ -15,19 +18,19 @@ function App() {
     if (!file) return;
 
     setAnalyzing(true);
-    const formData = new FormData();
-    formData.append('file', file);
+    setError(null);
 
     try {
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-      setResult(data);
-    } catch (error) {
-      console.error('Upload failed:', error);
-      setResult({ error: 'Upload failed' });
+      const data = await analyzeImage(file);
+      if (data.error) {
+        setError(data.error);
+        setResult(null);
+      } else {
+        setResult(data);
+      }
+    } catch (err) {
+      setError(err.error || 'Failed to analyze image');
+      setResult(null);
     } finally {
       setAnalyzing(false);
     }
@@ -37,17 +40,20 @@ function App() {
     if (!result || !result.patternId) return;
 
     try {
-      await fetch('/api/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patternId: result.patternId }),
-      });
-      alert('記録しました');
+      await reportPattern(result.patternId);
       setResult(null);
       setFile(null);
-    } catch (error) {
-      console.error('Report failed:', error);
+      setError(null);
+      // 成功メッセージはシンプルに次の分析に進む
+    } catch (err) {
+      setError(err.error || 'Failed to report pattern');
     }
+  };
+
+  const handleCancel = () => {
+    setResult(null);
+    setFile(null);
+    setError(null);
   };
 
   return (
@@ -66,6 +72,7 @@ function App() {
           <button type="submit" disabled={!file || analyzing}>
             {analyzing ? '分析中...' : '分析'}
           </button>
+          {error && <p className="error">{error}</p>}
         </form>
       ) : (
         <div className="result">
@@ -77,9 +84,15 @@ function App() {
               <p>
                 <strong>このパターンは {result.count} 件記録されています</strong>
               </p>
-              <p>{result.normalizedText}</p>
-              <button onClick={handleReport}>記録する</button>
-              <button onClick={() => setResult(null)}>キャンセル</button>
+              <p className="normalized-text">{result.normalizedText}</p>
+              <div className="button-group">
+                <button className="btn-primary" onClick={handleReport}>
+                  記録する
+                </button>
+                <button className="btn-secondary" onClick={handleCancel}>
+                  キャンセル
+                </button>
+              </div>
             </>
           )}
         </div>
