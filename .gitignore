@@ -1,0 +1,44 @@
+# Go
+*.o
+*.a
+*.so
+.DS_Store
+bin/
+dist/
+vendor/
+go.sum
+
+# Node/React
+node_modules/
+npm-debug.log
+yarn-error.log
+build/
+dist/
+.env.local
+.env.*.local
+
+# Python (if needed)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+
+# Database
+*.db
+*.sql~
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Credentials
+.env
+.env.local
+credentials.json
+**/config/local.js
+
+# Build artifacts
+/backend/api
+/backend/bin
