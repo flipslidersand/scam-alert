@@ -9,7 +9,8 @@ import (
 	_ "image/png"
 	"io"
 
-	vision "cloud.google.com/go/vision/v2"
+	vision "cloud.google.com/go/vision/v2/apiv1"
+	visionpb "cloud.google.com/go/vision/v2/apiv1/visionpb"
 )
 
 // VisionClient: Google Cloud Vision API クライアント
@@ -47,24 +48,45 @@ func (vc *VisionClient) ExtractText(ctx context.Context, imageData io.Reader) (s
 	}
 
 	// Vision API に送信（DOCUMENT_TEXT_DETECTION）
-	image := vision.NewImageFromBytes(imageBytes)
-	annotations, err := vc.client.DetectDocumentText(ctx, image, nil)
-	if err != nil {
-		return "", 0, fmt.Errorf("vision API error: %w", err)
+	req := &visionpb.BatchAnnotateImagesRequest{
+		Requests: []*visionpb.AnnotateImageRequest{
+			{
+				Image: &visionpb.Image{Content: imageBytes},
+				Features: []*visionpb.Feature{
+					{Type: visionpb.Feature_DOCUMENT_TEXT_DETECTION},
+				},
+			},
+		},
 	}
 
 	// 画像はここで破棄（重要: メモリに保持しない）
 	imageBytes = nil
 
-	if len(annotations) == 0 {
+	resp, err := vc.client.BatchAnnotateImages(ctx, req)
+	if err != nil {
+		return "", 0, fmt.Errorf("vision API error: %w", err)
+	}
+	if len(resp.GetResponses()) == 0 {
+		return "", 0, fmt.Errorf("no response from vision API")
+	}
+
+	annotation := resp.GetResponses()[0]
+	if annotation.GetError() != nil {
+		return "", 0, fmt.Errorf("vision API error: %s", annotation.GetError().GetMessage())
+	}
+
+	fullText := annotation.GetFullTextAnnotation()
+	if fullText == nil || fullText.GetText() == "" {
 		return "", 0, fmt.Errorf("no text detected in image")
 	}
 
-	// テキスト抽出（annotations[0] が全体のテキスト）
-	fullText := annotations[0].GetDescription()
-	confidence := float32(annotations[0].GetConfidence())
+	// TextAnnotation自体に信頼度は無いため、先頭ページの信頼度を代表値として使う
+	var confidence float32
+	if pages := fullText.GetPages(); len(pages) > 0 {
+		confidence = pages[0].GetConfidence()
+	}
 
-	return fullText, confidence, nil
+	return fullText.GetText(), confidence, nil
 }
 
 // Close: Vision APIクライアントの後処理

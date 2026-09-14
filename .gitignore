@@ -6,7 +6,6 @@
 bin/
 dist/
 vendor/
-go.sum
 
 # Node/React
 node_modules/
