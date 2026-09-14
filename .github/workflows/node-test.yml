@@ -1,0 +1,14 @@
+name: Node Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    uses: flipslidersand-labs/qa-workflows/.github/workflows/node-test.yml@main
+    with:
+      node-version: "20"
+      package-manager: "npm"
+      working-directory: frontend
